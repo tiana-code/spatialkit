@@ -2,7 +2,7 @@
 
 ![Risk Zones & Vessel Positions](img/sc1.png)
 
-A focused Kotlin/Spring Boot module demonstrating spatial query patterns extracted from a production maritime platform:
+A Kotlin/Spring Boot module implementing spatial query patterns with PostGIS and JTS:
 
 - **PostGIS native queries** - ST_Intersects, ST_Contains, ST_MakeEnvelope, ST_DWithin, KNN ordering with `<->`
 - **JTS in-memory spatial indexing** - STRtree bulk-load, PreparedGeometry, TopologyPreservingSimplifier
@@ -11,39 +11,6 @@ A focused Kotlin/Spring Boot module demonstrating spatial query patterns extract
 - **Coastline detection** - 44-box O(n) bounding-box scan for dead-reckoning guard
 
 ---
-
-## Architecture
-
-```mermaid
-graph TD
-    subgraph postgis["postgis/ - PostGIS Layer"]
-        SQR["SpatialQueryRepository\nJPA + native SQL\nST_Intersects · ST_Contains\nST_MakeEnvelope · ST_DWithin"]
-        TR["TrajectoryRepository\nJdbcTemplate\nST_AsGeoJSON · ST_GeomFromText\nST_NumPoints · ST_NPoints"]
-        NSS["NearbySearchService\nJdbcTemplate\nST_DWithin + KNN ‹-›\nST_Distance · geography cast"]
-    end
-
-    subgraph jts["jts/ - JTS In-Memory Layer"]
-        SIS["SpatialIndexService\nSTRtree queries\nPreparedGeometry"]
-        GJP["GeoJsonParser\nFeatureCollection parsing\nring validation"]
-        PS["PolygonSimplifier\nTopologyPreservingSimplifier\nclient delivery"]
-        SQR2["SpatialQueryResult\nSuccess | Degraded"]
-    end
-
-    subgraph detection["detection/ - Fast Guard"]
-        CD["CoastlineDetector\n44 bounding boxes\nO(n) scan\nfalse-negative safe"]
-    end
-
-    subgraph model["model/"]
-        RZ["RiskZone (entity)"]
-        ENUM["RiskZoneType · RiskLevel\nRiskZoneStatus"]
-        SR["SpatialResult\nGeoJsonFeatureCollection"]
-    end
-
-    SQR --> RZ
-    SIS --> SR
-    CD -.->|"fast pre-filter"| SIS
-    NSS --> SR
-```
 
 ---
 
